@@ -175,7 +175,7 @@ export async function prepareCreateInvoice(
     Math.round(formData.amount * (1 - formData.discountRate) * 1_000_000)
   );
 
-  const tx = await invoiceContract.mintInvoice(
+  const unsignedXdr = await invoiceContract.mintInvoice(
     {
       ipfsCid: metadataCid,
       amount: BigInt(Math.round(formData.amount * 1_000_000)),
@@ -186,7 +186,7 @@ export async function prepareCreateInvoice(
     ownerAddress
   );
 
-  return { unsignedXdr: tx.toXDR(), metadataCid };
+  return { unsignedXdr, metadataCid };
 }
 
 /**
@@ -200,12 +200,10 @@ export async function prepareFundInvoice(
   if (USE_MOCK) {
     return `mock_unsigned_xdr_fund_invoice_${tokenId}_${amount}_${investorAddress}`;
   }
-  const tx = await marketplaceContract.fundInvoice(
-    BigInt(tokenId),
-    BigInt(Math.round(amount * 1_000_000)),
+  return marketplaceContract.fundInvoice(
+    { tokenId: BigInt(tokenId), amount: BigInt(Math.round(amount * 1_000_000)) },
     investorAddress
   );
-  return tx.toXDR();
 }
 
 /**
@@ -225,24 +223,18 @@ export async function submitAndConfirm(signedXdr: string): Promise<string> {
   return result.hash;
 }
 
-/**
- * Prepare repay transaction for an invoice (returns unsigned XDR)
- */
-export async function prepareRepayInvoice(tokenId: string, ownerAddress: string): Promise<string> {
+export async function fetchInvestorPositions(investorAddress: string): Promise<import("@/types").InvoicePosition[]> {
   if (USE_MOCK) {
-    return `mock_unsigned_xdr_repay_invoice_${tokenId}_${ownerAddress}`;
+    // Return mock positions derived from mock invoices
+    return MOCK_INVOICES.slice(0, 2).map((invoice) => ({
+      invoiceId: invoice.id,
+      invoice,
+      investedAmount: 1000,
+      expectedReturn: 1050,
+      yieldEarned: 0,
+      investedAt: new Date().toISOString(),
+      status: "active" as const,
+    }));
   }
-  const tx = await marketplaceContract.repayInvoice(BigInt(tokenId), ownerAddress);
-  return tx.toXDR();
-}
-
-/**
- * Prepare claim transaction for an investor position (returns unsigned XDR)
- */
-export async function prepareClaimPosition(positionId: string, investorAddress: string): Promise<string> {
-  if (USE_MOCK) {
-    return `mock_unsigned_xdr_claim_position_${positionId}_${investorAddress}`;
-  }
-  // TODO: implement on-chain claim via marketplace/positions contract when available
-  throw new Error("Claim on-chain not implemented");
+  throw new Error("Live positions fetch not yet implemented");
 }

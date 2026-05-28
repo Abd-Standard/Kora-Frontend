@@ -28,6 +28,7 @@ import { useWallet } from "@/hooks/useWallet";
 import { useTransaction } from "@/hooks/useTransaction";
 import { useUIStore, useInvoiceStore } from "@/store";
 import { prepareFundInvoice } from "@/services/invoiceService";
+import { Badge, RiskBadge } from "@/components/ui/badge";
 import { MOCK_INVOICES } from "@/services/mockData";
 import {
   formatCurrency,
@@ -35,7 +36,6 @@ import {
   formatDate,
   formatRelativeDate,
   daysUntil,
-  RISK_TIER_COLORS,
   STATUS_COLORS,
   cn,
 } from "@/lib/utils";
@@ -174,9 +174,7 @@ Stellar Testnet Transaction Hash: ${txHash}`);
                     <p className="mt-0.5 text-sm text-zinc-500">{metadata.issuerName}</p>
                   </div>
                   <div className="flex flex-col items-end gap-2">
-                    <span className={cn("rounded-md border px-2.5 py-1 text-sm font-semibold", RISK_TIER_COLORS[riskTier])}>
-                      {riskTier}
-                    </span>
+                    <RiskBadge tier={riskTier} />
                     <span className={cn("rounded-md px-2 py-0.5 text-xs capitalize", STATUS_COLORS[status])}>
                       {status.replace(/_/g, " ")}
                     </span>
@@ -471,11 +469,9 @@ Stellar Testnet Transaction Hash: ${txHash}`);
                 <p className="text-sm font-medium text-zinc-300">Risk Assessment</p>
               </div>
               <div className="space-y-2">
-                <div className="flex justify-between text-sm">
+                <div className="flex justify-between items-center text-sm">
                   <span className="text-zinc-500">Risk Tier</span>
-                  <span className={cn("font-semibold", RISK_TIER_COLORS[riskTier].split(" ")[0])}>
-                    {riskTier}
-                  </span>
+                  <RiskBadge tier={riskTier} />
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-zinc-500">Risk Score</span>

@@ -90,31 +90,23 @@ export const STATUS_COLORS: Record<string, string> = {
   cancelled: "text-muted-foreground bg-muted",
 };
 
-/**
- * Export an array of objects as CSV and trigger download
- */
-export function exportCsv(rows: Record<string, any>[], filename = "export.csv") {
-  if (!rows || rows.length === 0) return;
-  const keys = Object.keys(rows[0]);
-  const csv = [keys.join(",")]
-    .concat(
-      rows.map((r) =>
-        keys
-          .map((k) => {
-            const v = r[k] ?? "";
-            const out = typeof v === "string" ? v.replace(/"/g, '""') : String(v);
-            return `"${out}"`;
-          })
-          .join(",")
-      )
-    )
-    .join("\n");
-
-  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  a.click();
-  URL.revokeObjectURL(url);
+/** Retry a function up to `attempts` times with exponential backoff on 5xx errors */
+export async function withRetry<T>(
+  fn: () => Promise<T>,
+  attempts = 3,
+  baseDelayMs = 500
+): Promise<T> {
+  let lastError: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastError = err;
+      const is5xx =
+        err instanceof Error && /5\d{2}/.test(err.message);
+      if (!is5xx || i === attempts - 1) throw err;
+      await new Promise((r) => setTimeout(r, baseDelayMs * 2 ** i));
+    }
+  }
+  throw lastError;
 }

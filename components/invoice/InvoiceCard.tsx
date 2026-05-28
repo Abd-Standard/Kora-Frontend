@@ -3,14 +3,13 @@
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Calendar, Users, TrendingUp, MapPin } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { RiskBadge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import {
   formatCurrency,
   formatApr,
   daysUntil,
-  RISK_TIER_COLORS,
   STATUS_COLORS,
   cn,
 } from "@/lib/utils";
@@ -43,14 +42,7 @@ export function InvoiceCard({ invoice, index = 0 }: InvoiceCardProps) {
               </p>
             </div>
             <div className="flex shrink-0 flex-col items-end gap-1">
-              <span
-                className={cn(
-                  "inline-flex items-center rounded-md border px-2 py-0.5 text-xs font-semibold",
-                  RISK_TIER_COLORS[riskTier]
-                )}
-              >
-                {riskTier}
-              </span>
+              <RiskBadge tier={riskTier} />
               <span
                 className={cn(
                   "rounded-md px-2 py-0.5 text-xs capitalize",
