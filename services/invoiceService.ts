@@ -158,7 +158,7 @@ export async function prepareCreateInvoice(
     Math.round(formData.amount * (1 - formData.discountRate) * 1_000_000)
   );
 
-  const tx = await invoiceContract.mintInvoice(
+  const unsignedXdr = await invoiceContract.mintInvoice(
     {
       ipfsCid: metadataCid,
       amount: BigInt(Math.round(formData.amount * 1_000_000)),
@@ -169,7 +169,7 @@ export async function prepareCreateInvoice(
     ownerAddress
   );
 
-  return { unsignedXdr: tx.toXDR(), metadataCid };
+  return { unsignedXdr, metadataCid };
 }
 
 /**
@@ -183,12 +183,10 @@ export async function prepareFundInvoice(
   if (USE_MOCK) {
     return `mock_unsigned_xdr_fund_invoice_${tokenId}_${amount}_${investorAddress}`;
   }
-  const tx = await marketplaceContract.fundInvoice(
-    BigInt(tokenId),
-    BigInt(Math.round(amount * 1_000_000)),
+  return marketplaceContract.fundInvoice(
+    { tokenId: BigInt(tokenId), amount: BigInt(Math.round(amount * 1_000_000)) },
     investorAddress
   );
-  return tx.toXDR();
 }
 
 /**

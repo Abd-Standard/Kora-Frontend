@@ -11,11 +11,11 @@ import { DataTable } from "@/components/ui/data-table";
 import { useWallet } from "@/hooks/useWallet";
 import { useUIStore } from "@/store";
 import { MOCK_INVOICES } from "@/services/mockData";
+import { RiskBadge } from "@/components/ui/badge";
 import {
   formatCurrency,
   formatDate,
   formatApr,
-  RISK_TIER_COLORS,
   cn,
 } from "@/lib/utils";
 import type { ColumnDef } from "@/types/table";
@@ -94,16 +94,7 @@ const POSITION_COLUMNS: ColumnDef<InvestorPosition>[] = [
     id: "risk",
     header: "Risk",
     accessor: (row) => row.invoice.riskTier,
-    cell: (row) => (
-      <span
-        className={cn(
-          "rounded-md border px-2 py-0.5 text-xs font-semibold",
-          RISK_TIER_COLORS[row.invoice.riskTier]
-        )}
-      >
-        {row.invoice.riskTier}
-      </span>
-    ),
+    cell: (row) => <RiskBadge tier={row.invoice.riskTier} />,
   },
   {
     id: "due",
@@ -239,9 +230,7 @@ export default function InvestorDashboardPage() {
             ).map(([tier, amount]) => (
               <div key={tier} className="space-y-1">
                 <div className="flex justify-between text-sm">
-                  <span className={cn("font-medium", RISK_TIER_COLORS[tier].split(" ")[0])}>
-                    {tier}
-                  </span>
+                  <RiskBadge tier={tier as import("@/components/ui/badge").AnyRiskTier} />
                   <span className="text-muted-foreground">
                     {formatCurrency(amount, "USDC", true)}
                   </span>
