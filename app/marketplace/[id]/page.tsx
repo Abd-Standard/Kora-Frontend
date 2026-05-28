@@ -20,7 +20,7 @@ import {
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, GlassCard } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
+import { Progress, InvoiceFundingProgress } from "@/components/ui/progress";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { useInvoice } from "@/hooks/useInvoices";
@@ -42,7 +42,7 @@ import {
 
 export default function InvoiceDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const { data: invoice, isLoading } = useInvoice(id);
+  const { data: invoice, isLoading, dataUpdatedAt } = useInvoice(id);
   const { isConnected, address } = useWallet();
   const { setWalletModalOpen } = useUIStore();
   const { execute } = useTransaction();
@@ -284,7 +284,12 @@ Stellar Testnet Transaction Hash: ${txHash}`);
                     {formatCurrency(terms.financingAmount, metadata.currency, true)}
                   </span>
                 </div>
-                <Progress value={fundingState.fundingProgress * 100} className="h-3" />
+                <InvoiceFundingProgress
+                  funded={fundingState.totalRaised}
+                  target={fundingState.targetAmount}
+                  currency={metadata.currency}
+                  updatedAt={dataUpdatedAt}
+                />
                 <div className="grid grid-cols-3 gap-4 pt-2">
                   <div>
                     <p className="text-xs text-zinc-500">Investors</p>

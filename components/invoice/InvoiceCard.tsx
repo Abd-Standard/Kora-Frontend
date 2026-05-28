@@ -22,6 +22,7 @@ import type { Invoice } from "@/types";
 interface InvoiceCardProps {
   invoice: Invoice;
   index?: number;
+  updatedAt?: number;
 }
 
 const JURISDICTION_FLAGS: Record<string, string> = {
@@ -60,7 +61,7 @@ function getFlagEmoji(countryCode: string) {
   }
 }
 
-export function InvoiceCard({ invoice, index = 0 }: InvoiceCardProps) {
+export function InvoiceCard({ invoice, index = 0, updatedAt }: InvoiceCardProps) {
   const { metadata, terms, funding, riskTier, status } = invoice;
   const days = daysUntil(terms.repaymentDate);
   const flag = getFlagEmoji(metadata.jurisdiction);
@@ -135,6 +136,7 @@ export function InvoiceCard({ invoice, index = 0 }: InvoiceCardProps) {
               funded={funding.totalRaised}
               target={funding.targetAmount}
               currency={metadata.currency}
+              updatedAt={updatedAt}
             />
           </div>
 
