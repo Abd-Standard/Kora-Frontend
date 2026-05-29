@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useState } from "react";
-import { toast } from "sonner";
+import { useToast } from "./useToast";
 import { useWallet } from "./useWallet";
 import { rpc, submitTransaction } from "@/lib/stellar/client";
+import { env } from "@/lib/env";
 import * as StellarSdk from "@stellar/stellar-sdk";
 
 export type TxLifecycleStatus =
@@ -58,18 +59,19 @@ async function pollWithBackoff(hash: string): Promise<string> {
 export function useTransaction() {
   const [state, setState] = useState<TxState>({ status: "idle" });
   const { signTransaction } = useWallet();
+  const toast = useToast();
 
   const setStage = (status: TxLifecycleStatus, extra?: Partial<TxState>) => {
     setState((s) => ({ ...s, status, ...extra }));
     if (status !== "idle" && status !== "confirmed" && status !== "failed") {
-      toast.loading(STAGE_MESSAGES[status], { id: TOAST_ID });
+      toast.loading(STAGE_MESSAGES[status], TOAST_ID);
     }
   };
 
   const execute = useCallback(
     async (
       buildFn: () => Promise<string>,
-      options?: { onSuccess?: (hash: string) => void; successMessage?: string }
+      options?: { onSuccess?: (hash: string) => void; successMessage?: string; onError?: (err: unknown) => void }
     ): Promise<string | null> => {
       try {
         // 1. Build
@@ -81,7 +83,7 @@ export function useTransaction() {
           setStage("simulating");
           const tx = StellarSdk.TransactionBuilder.fromXDR(
             unsignedXdr,
-            process.env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE || StellarSdk.Networks.TESTNET
+            env.NEXT_PUBLIC_STELLAR_NETWORK_PASSPHRASE
           );
           const sim = await rpc.simulateTransaction(tx);
           if (StellarSdk.rpc.Api.isSimulationError(sim)) {
@@ -118,21 +120,20 @@ export function useTransaction() {
 
         // 6. Confirmed
         setState({ status: "confirmed", txHash: hash });
-        toast.success(options?.successMessage ?? "Transaction confirmed!", {
-          id: TOAST_ID,
-          description: `Hash: ${hash.slice(0, 16)}…`,
-        });
+        toast.success(options?.successMessage ?? "Transaction confirmed!", hash, TOAST_ID);
 
         options?.onSuccess?.(hash);
         return hash;
       } catch (err) {
         const message = err instanceof Error ? err.message : "Transaction failed";
         setState({ status: "failed", error: message });
-        toast.error("Transaction failed", {
-          id: TOAST_ID,
-          description: message,
-          action: { label: "Retry", onClick: () => setState({ status: "idle" }) },
-        });
+        toast.error(
+          "Transaction failed",
+          message,
+          () => setState({ status: "idle" }),
+          TOAST_ID
+        );
+        options?.onError?.(err);
         return null;
       }
     },

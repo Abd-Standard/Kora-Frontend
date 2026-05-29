@@ -7,8 +7,10 @@ import { MOCK_INVOICES } from "./mockData";
 import { uploadFileToPinata, uploadInvoiceMetadata } from "@/lib/ipfs";
 import { invoiceContract, marketplaceContract } from "@/lib/stellar/contracts";
 import { submitTransaction, waitForTransaction } from "@/lib/stellar/client";
+import { sanitizeIpfsMetadata } from "@/lib/security";
+import { env } from "@/lib/env";
 
-const USE_MOCK = process.env.NEXT_PUBLIC_ENABLE_MOCK_DATA === "true";
+const USE_MOCK = env.NEXT_PUBLIC_ENABLE_MOCK_DATA;
 
 // ─── Read Operations ──────────────────────────────────────────────────────────
 
@@ -78,6 +80,22 @@ export async function fetchInvoiceById(id: string): Promise<Invoice | null> {
     return MOCK_INVOICES.find((i) => i.id === id) ?? null;
   }
   throw new Error("Live data fetch not yet implemented");
+}
+
+/**
+ * Fetches and sanitizes invoice metadata from IPFS.
+ * All fields from untrusted external sources are sanitized before use.
+ */
+export async function fetchIpfsMetadata(cid: string): Promise<Record<string, unknown>> {
+  const gateway = env.NEXT_PUBLIC_IPFS_GATEWAY;
+  // Validate CID before making the request
+  if (!/^[a-zA-Z0-9+/=_-]{10,100}$/.test(cid)) {
+    throw new Error("Invalid IPFS CID");
+  }
+  const res = await fetch(`${gateway}/${cid}`, { signal: AbortSignal.timeout(10_000) });
+  if (!res.ok) throw new Error(`IPFS fetch failed: ${res.status}`);
+  const raw: unknown = await res.json();
+  return sanitizeIpfsMetadata(raw);
 }
 
 export async function fetchInvoicesByOwner(ownerAddress: string): Promise<Invoice[]> {
@@ -152,6 +170,7 @@ export async function prepareCreateInvoice(
 
     // Backward compatibility flat properties
     invoiceNumber: formData.invoiceNumber,
+    issuerName: ownerAddress, // wallet address used as issuer name when not provided
     issuerAddress: ownerAddress,
     debtorName: formData.debtorName,
     debtorAddress: formData.debtorAddress,
@@ -162,7 +181,7 @@ export async function prepareCreateInvoice(
     jurisdiction: formData.jurisdiction,
     category: formData.category,
     documentHash: docCid,
-    documentUrl: `${process.env.NEXT_PUBLIC_IPFS_GATEWAY || "https://gateway.pinata.cloud/ipfs"}/${docCid}`,
+    documentUrl: `${env.NEXT_PUBLIC_IPFS_GATEWAY}/${docCid}`,
   };
 
   const metadataCid = await uploadInvoiceMetadata(

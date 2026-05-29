@@ -1,8 +1,9 @@
 import { NextResponse } from "next/server";
+import { env } from "@/lib/env";
 
 const PINATA_BASE = "https://api.pinata.cloud";
-const PINATA_JWT = process.env.PINATA_JWT || "";
-const VIRUSTOTAL_API_KEY = process.env.VIRUSTOTAL_API_KEY || "";
+const PINATA_JWT = env.PINATA_JWT ?? "";
+const VIRUSTOTAL_API_KEY = env.VIRUSTOTAL_API_KEY ?? "";
 
 // In-memory rate limit store: walletAddress -> timestamps (ms)
 const RATE_LIMIT_WINDOW = 1000 * 60 * 60; // 1 hour
@@ -14,7 +15,7 @@ async function virusScan(buffer: Buffer, filename: string) {
 
   try {
     const form = new FormData();
-    form.append("file", new Blob([buffer]), filename);
+    form.append("file", new Blob([buffer as unknown as ArrayBuffer]), filename);
 
     const uploadRes = await fetch("https://www.virustotal.com/api/v3/files", {
       method: "POST",

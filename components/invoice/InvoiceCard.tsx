@@ -2,8 +2,8 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Calendar, Users, TrendingUp, MapPin } from "lucide-react";
-import { RiskBadge } from "@/components/ui/badge";
+import { Calendar, Users, TrendingUp, MapPin, ArrowRight } from "lucide-react";
+import { RiskBadge, Badge } from "@/components/ui/badge";
 import { InvoiceFundingProgress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -14,9 +14,9 @@ import {
   formatCurrency,
   formatApr,
   daysUntil,
-  STATUS_COLORS,
   cn,
 } from "@/lib/utils";
+import { InvoiceStatusBadge } from "./InvoiceStatusBadge";
 import type { Invoice } from "@/types";
 
 interface InvoiceCardProps {
@@ -110,14 +110,7 @@ export function InvoiceCard({ invoice, index = 0, updatedAt }: InvoiceCardProps)
                   {formatApr(terms.apr)}
                 </Badge>
               </div>
-              <span
-                className={cn(
-                  "rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider",
-                  STATUS_COLORS[status]
-                )}
-              >
-                {status.replace(/_/g, " ")}
-              </span>
+              <InvoiceStatusBadge status={status} />
             </div>
           </div>
 

@@ -9,11 +9,12 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { StatCard } from "@/components/ui/stat-card";
 import { Progress } from "@/components/ui/progress";
 import { RepaymentDialog } from "@/components/invoice/RepaymentDialog";
+import { DashboardSkeleton } from "@/components/ui/skeleton";
 import dynamic from "next/dynamic";
 import type { DataTableProps } from "@/types/table";
 const DataTable = dynamic<DataTableProps<Invoice>>(
   () => import("@/components/ui/data-table").then((m) => m.DataTable),
-  { ssr: false, loading: () => <div className="h-48 rounded bg-zinc-900/40" /> }
+  { ssr: false, loading: () => <DashboardSkeleton statCount={4} tableRows={5} tableCols={8} /> }
 );
 import { useWallet } from "@/hooks/useWallet";
 import { useSMEInvoices } from "@/hooks/useInvoices";
@@ -26,11 +27,12 @@ import {
   formatCurrency,
   formatDate,
   formatApr,
-  STATUS_COLORS,
   cn,
 } from "@/lib/utils";
+import { InvoiceStatusBadge } from "@/components/invoice/InvoiceStatusBadge";
 import type { Invoice } from "@/types";
 import type { ColumnDef } from "@/types/table";
+import { ErrorBoundary } from "@/components/ui/error-boundary";
 
 
 export default function SMEDashboardPage() {
@@ -105,6 +107,7 @@ export default function SMEDashboardPage() {
   };
 
   return (
+    <ErrorBoundary>
     <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
       <div className="mb-8 flex items-center justify-between">
         <div>
@@ -189,9 +192,7 @@ export default function SMEDashboardPage() {
                   header: "Status",
                   accessor: (row) => row.status,
                   cell: (row) => (
-                    <span className={cn("rounded-md px-2 py-0.5 text-xs capitalize", STATUS_COLORS[row.status])}>
-                      {row.status.replace(/_/g, " ")}
-                    </span>
+                    <InvoiceStatusBadge status={row.status} />
                   ),
                 },
                 {
@@ -280,5 +281,6 @@ export default function SMEDashboardPage() {
         }
       />
     </div>
+    </ErrorBoundary>
   );
 }
